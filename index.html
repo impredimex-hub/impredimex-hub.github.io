@@ -155,9 +155,15 @@ const $ = id => document.getElementById(id);
 const esc = t => String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 function init(){
-  if(firebase.apps.length) return;
-  firebase.initializeApp(SUITE_CONFIG);
-  suiteAuth = firebase.auth(); suiteDb = firebase.firestore();
+  if(suiteAuth) return;
+  // El nombre 'suite' NO es decorativo. Firebase guarda la sesión con una clave
+  // que incluye el nombre de la conexión, y las cinco apps usan ese mismo
+  // nombre, como manda la regla 5 de la suite. Si el portal la inicializara sin
+  // nombre, quedaría como [DEFAULT] y guardaría la sesión en otro cajón: se
+  // vería la misma dirección pero cada uno pediría la clave por su lado.
+  const app = firebase.apps.filter(a => a.name === 'suite')[0]
+              || firebase.initializeApp(SUITE_CONFIG, 'suite');
+  suiteAuth = app.auth(); suiteDb = app.firestore();
   suiteAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e=>console.warn(e));
 }
 
