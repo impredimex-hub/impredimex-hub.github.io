@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>IMPREDIMEX</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#003580">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="IMPREDIMEX">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+
+<!-- ╔═══════════════════════════════════════════════════════════════════╗
+     ║  PORTAL DE LA SUITE IMPREDIMEX                                     ║
+     ║                                                                    ║
+     ║  Un solo icono en el celular. Adentro, las apps que cada persona   ║
+     ║  tiene permitidas.                                                 ║
+     ║                                                                    ║
+     ║  La lista de apps NO está escrita aquí: vive en la colección       ║
+     ║  `apps` del proyecto impredimex-suite. Agregar Tintas o Almacén    ║
+     ║  es crear un documento, no publicar una versión nueva del portal.  ║
+     ╚═══════════════════════════════════════════════════════════════════╝ -->
+<script>
+  const SUITE_CONFIG = {
+    apiKey:            "AIzaSyBAfEAWPYCdt_7kN1uHqTmPiRHIn6BgOyo",
+    authDomain:        "impredimex-suite.firebaseapp.com",
+    projectId:         "impredimex-suite",
+    storageBucket:     "impredimex-suite.firebasestorage.app",
+    messagingSenderId: "272151508788",
+    appId:             "1:272151508788:web:df68c90faa8cc1996cd761"
+  };
+  const DOMINIO = '@impredimex.local';
+
+  /* Respaldo por si la colección `apps` todavía no existe en la suite.
+     En cuanto exista, manda ella y esto deja de usarse. Las direcciones
+     son las de hoy; al mover los repos solo cambia el catálogo. */
+  const APPS_RESPALDO = [
+    {id:'rrhh',     nombre:'Recursos Humanos',      descripcion:'Directorio, incidencias, capacitación y vacantes', url:'https://impredimex-hub.github.io/rrhh-pwa/',                          orden:1, activa:true, glifo:'personas'},
+    {id:'epp',      nombre:'EPP',                   descripcion:'Verificación de equipo de protección y BPM',       url:'https://victormorenogarcia05-ux.github.io/impredimex-epp/',            orden:2, activa:true, glifo:'casco'},
+    {id:'procesos', nombre:'Ingeniería de Procesos',descripcion:'5S, checklists, evaluaciones y Gantt',             url:'https://impredimex-hub.github.io/proceso-pwa/',                        orden:3, activa:true, glifo:'gantt'},
+    {id:'calidad',  nombre:'Control de Procesos',   descripcion:'Inspección de calidad y acciones correctivas',     url:'https://victormorenogarcia05-ux.github.io/control-proceso-impredimex/',orden:4, activa:true, glifo:'lupa'},
+    {id:'manto',    nombre:'Mantenimiento',         descripcion:'Órdenes de trabajo y preventivo',                  url:'https://victormorenogarcia05-ux.github.io/Mantenimiento-Impredimex/',  orden:5, activa:true, glifo:'engrane'}
+  ];
+</script>
+
+<style>
+:root{
+  --navy:#003580; --navy-dark:#002060; --navy-mid:#1A4D9A; --navy-light:#E8EEF8;
+  --text:#1a2332; --text2:#5A6A80; --text3:#8A9AB0;
+  --line:#DDE3EC; --surface:#fff; --bg:#F4F7FC; --red:#C8102E;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--text);min-height:100vh;
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+button,input{font-family:inherit;font-size:inherit}
+.hide{display:none !important}
+
+/* ── Acceso ── */
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:22px}
+.caja{background:var(--surface);border-radius:18px;box-shadow:0 8px 34px rgba(0,32,96,.10);
+  padding:30px 26px;width:100%;max-width:350px}
+.marca{background:var(--navy);color:#fff;width:54px;height:54px;border-radius:13px;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:21px;
+  letter-spacing:.04em;margin:0 auto 12px}
+label{display:block;font-size:11.5px;font-weight:600;color:var(--text2);margin:12px 0 5px}
+input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;outline:none}
+input:focus{border-color:var(--navy-mid)}
+.btn{width:100%;margin-top:16px;padding:13px;border:none;border-radius:10px;
+  background:var(--navy);color:#fff;font-weight:700;cursor:pointer}
+.btn:disabled{background:var(--text3);cursor:default}
+.err{color:var(--red);font-size:12.5px;margin-top:9px;line-height:1.45}
+
+/* ── Portal ── */
+header{padding:22px 20px 6px;max-width:640px;margin:0 auto;display:flex;
+  align-items:flex-start;justify-content:space-between;gap:14px}
+.saludo{font-size:20px;font-weight:700;color:var(--navy-dark);line-height:1.25}
+.sub{font-size:12.5px;color:var(--text2);margin-top:2px}
+.salir{background:none;border:1px solid var(--line);border-radius:9px;padding:7px 12px;
+  font-size:11.5px;font-weight:600;color:var(--navy);cursor:pointer;white-space:nowrap}
+
+main{max-width:640px;margin:0 auto;padding:14px 20px 50px}
+.app{display:flex;align-items:center;gap:15px;background:var(--surface);border:1px solid var(--line);
+  border-radius:15px;padding:15px;margin-bottom:11px;cursor:pointer;text-decoration:none;
+  color:inherit;transition:transform .12s, box-shadow .12s}
+.app:active{transform:scale(.985)}
+.app:hover{box-shadow:0 4px 16px rgba(0,32,96,.09)}
+.ico{width:50px;height:50px;border-radius:12px;background:var(--navy);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center}
+.ico svg{width:30px;height:30px;fill:#fff}
+.app-nom{font-size:15.5px;font-weight:700;color:var(--navy-dark)}
+.app-des{font-size:12.5px;color:var(--text2);line-height:1.4;margin-top:1px}
+.flecha{color:var(--text3);flex-shrink:0}
+.papel{display:inline-block;background:var(--navy-light);color:var(--navy);font-size:10px;
+  font-weight:700;padding:1px 6px;border-radius:4px;margin-left:6px;vertical-align:1px}
+.vacio{text-align:center;color:var(--text2);font-size:13.5px;padding:40px 16px;line-height:1.6}
+.pie{text-align:center;font-size:11px;color:var(--text3);padding:18px}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="caja">
+    <div style="text-align:center;margin-bottom:6px">
+      <div class="marca">IM</div>
+      <div style="font-size:18px;font-weight:700;color:var(--navy-dark)">IMPREDIMEX</div>
+      <div style="font-size:12px;color:var(--text2)">Impresión y Diseño de México</div>
+    </div>
+    <label>Número de nómina</label>
+    <input id="in-nom" inputmode="numeric" autocomplete="username">
+    <label>Clave</label>
+    <input id="in-pwd" type="password" autocomplete="current-password">
+    <div class="err" id="err"></div>
+    <button class="btn" id="btn">Entrar</button>
+    <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:15px;line-height:1.5">
+      Es la misma clave de todas las aplicaciones.<br>
+      Si la olvidaste, pídele a un administrador que la restablezca.
+    </div>
+  </div>
+</div>
+
+<div id="portal" class="hide">
+  <header>
+    <div>
+      <div class="saludo" id="saludo">—</div>
+      <div class="sub" id="sub">—</div>
+    </div>
+    <button class="salir" onclick="salir()">Salir</button>
+  </header>
+  <main><div id="lista"></div></main>
+  <div class="pie">IMPREDIMEX — Impresión y Diseño de México S.A. de C.V.</div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+/* Los mismos glifos de los iconos de cada app, para que el portal y la
+   pantalla de inicio del celular se vean como una sola cosa. */
+const GLIFOS = {
+  casco:   '<svg viewBox="0 0 64 64"><path d="M32 13c-10.5 0-19 8.5-19 19v5h38v-5c0-10.5-8.5-19-19-19z"/><rect x="6" y="40" width="52" height="9" rx="4.5"/></svg>',
+  personas:'<svg viewBox="0 0 64 64"><circle cx="43" cy="23" r="9"/><path d="M43 34c8.8 0 16 7.2 16 16v3H27v-3c0-8.8 7.2-16 16-16z"/><circle cx="24" cy="24" r="9"/><path d="M24 35c8.8 0 16 7.2 16 16v3H8v-3c0-8.8 7.2-16 16-16z"/></svg>',
+  gantt:   '<svg viewBox="0 0 64 64"><rect x="6" y="12" width="34" height="11" rx="5.5"/><rect x="20" y="27" width="38" height="11" rx="5.5"/><rect x="12" y="42" width="28" height="11" rx="5.5"/></svg>',
+  lupa:    '<svg viewBox="0 0 64 64"><path d="M38 40l14 14" stroke="#fff" stroke-width="11" stroke-linecap="round" fill="none"/><circle cx="27" cy="27" r="23"/><circle cx="27" cy="27" r="16" fill="#003580"/><path d="M19 27.5l6 6 11-12" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
+  engrane: '<svg viewBox="0 0 64 64"><path d="M32 3l4 8 9-3 2 9 9 2-3 9 8 4-8 4 3 9-9 2-2 9-9-3-4 8-4-8-9 3-2-9-9-2 3-9-8-4 8-4-3-9 9-2 2-9 9 3z"/><circle cx="32" cy="32" r="9" fill="#003580"/></svg>',
+  caja:    '<svg viewBox="0 0 64 64"><path d="M32 5L57 17v30L32 59 7 47V17z"/><path d="M7 17l25 12 25-12M32 29v30" stroke="#003580" stroke-width="4" fill="none"/></svg>',
+  tinta:   '<svg viewBox="0 0 64 64"><path d="M32 4C32 4 13 27 13 39a19 19 0 0 0 38 0C51 27 32 4 32 4z"/><path d="M32 47a8 8 0 0 1-8-8" stroke="#003580" stroke-width="4" fill="none" stroke-linecap="round"/></svg>',
+  generico:'<svg viewBox="0 0 64 64"><rect x="8" y="8" width="20" height="20" rx="4"/><rect x="36" y="8" width="20" height="20" rx="4"/><rect x="8" y="36" width="20" height="20" rx="4"/><rect x="36" y="36" width="20" height="20" rx="4"/></svg>'
+};
+
+let suiteAuth=null, suiteDb=null, sesion=null;
+const $ = id => document.getElementById(id);
+const esc = t => String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function init(){
+  if(firebase.apps.length) return;
+  firebase.initializeApp(SUITE_CONFIG);
+  suiteAuth = firebase.auth(); suiteDb = firebase.firestore();
+  suiteAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e=>console.warn(e));
+}
+
+function mensajeDeError(c){
+  switch(c){
+    case 'auth/invalid-credential': case 'auth/wrong-password': case 'auth/user-not-found':
+      return 'Nómina o clave incorrecta.';
+    case 'auth/too-many-requests':      return 'Demasiados intentos fallidos. Espera unos minutos.';
+    case 'auth/network-request-failed': return 'Sin conexión. Revisa tu red.';
+    default: return 'No se pudo iniciar sesión. Inténtalo de nuevo.';
+  }
+}
+
+$('btn').onclick = async () => {
+  const n=$('in-nom').value.trim(), p=$('in-pwd').value;
+  if(!n||!p){ $('err').textContent='Escribe tu nómina y tu clave.'; return; }
+  init(); $('btn').disabled=true; $('err').textContent='';
+  try{
+    await suiteAuth.signInWithEmailAndPassword(n+DOMINIO, p);
+    await abrir(suiteAuth.currentUser);
+  }catch(e){
+    console.error('Login:', e);
+    $('err').textContent = e.esDeAcceso ? e.message : mensajeDeError(e.code);
+    $('in-pwd').value='';
+    try{ await suiteAuth.signOut(); }catch(_){}
+  }finally{ $('btn').disabled=false; }
+};
+['in-nom','in-pwd'].forEach(id=>$(id).addEventListener('keydown',e=>{ if(e.key==='Enter') $('btn').click(); }));
+
+async function abrir(user){
+  const nomina = (user.email||'').split('@')[0];
+  const doc = await suiteDb.collection('colaboradores').doc(nomina).get();
+  const no = m => { const e=new Error(m); e.esDeAcceso=true; throw e; };
+  if(!doc.exists) no('Tu cuenta no tiene registro de personal. Avisa a Recursos Humanos.');
+  const c = doc.data()||{};
+  if(c.estatus!=='ACTIVO') no('Esta cuenta está dada de baja.');
+
+  sesion = { nomina, nombre: c.nombreCompleto||nomina,
+             apps: Array.isArray(c.apps)? c.apps : [], roles: c.roles||{} };
+
+  // Primer nombre, que es como se saluda a alguien.
+  const partes = sesion.nombre.trim().split(/\s+/);
+  const pila = partes.length>=3 ? partes.slice(2).join(' ') : sesion.nombre;
+  $('saludo').textContent = 'Hola, ' + titulo(pila);
+  $('sub').textContent = 'Nómina ' + nomina;
+
+  $('login').classList.add('hide'); $('portal').classList.remove('hide');
+  await pintarApps();
+}
+
+const titulo = t => t.toLowerCase().replace(/(^|\s)\S/g, s=>s.toUpperCase());
+
+/* El catálogo vive en la suite, no aquí. Agregar Tintas o Almacén es crear
+   un documento en la colección `apps`, sin publicar una versión nueva. */
+async function pintarApps(){
+  let catalogo = APPS_RESPALDO;
+  try{
+    const snap = await suiteDb.collection('apps').get();
+    if(!snap.empty) catalogo = snap.docs.map(d=>({id:d.id, ...d.data()}));
+  }catch(e){ console.warn('Catálogo de apps, se usa el respaldo:', e); }
+
+  const mias = catalogo
+    .filter(a => a.activa !== false && sesion.apps.includes(a.id))
+    .sort((a,b)=>(a.orden||99)-(b.orden||99));
+
+  if(!mias.length){
+    $('lista').innerHTML = `<div class="vacio">Todavía no tienes ninguna aplicación asignada.<br>
+      Pídele a un administrador que te dé acceso.</div>`;
+    return;
+  }
+  $('lista').innerHTML = mias.map(a=>{
+    const papel = sesion.roles[a.id];
+    return `<a class="app" href="${esc(a.url)}">
+      <div class="ico">${GLIFOS[a.glifo] || GLIFOS.generico}</div>
+      <div style="flex:1;min-width:0">
+        <div class="app-nom">${esc(a.nombre)}${papel?`<span class="papel">${esc(papel)}</span>`:''}</div>
+        <div class="app-des">${esc(a.descripcion||'')}</div>
+      </div>
+      <div class="flecha">›</div>
+    </a>`;
+  }).join('');
+}
+
+async function salir(){
+  try{ await suiteAuth.signOut(); }catch(e){}
+  location.reload();
+}
+
+init();
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>navigator.serviceWorker.register('sw.js').catch(e=>console.error(e)));
+}
+suiteAuth.onAuthStateChanged(async user=>{
+  if(user && !sesion){
+    try{ await abrir(user); }
+    catch(e){ console.error(e); try{ await suiteAuth.signOut(); }catch(_){} }
+  } else if(!user){ $('in-nom').focus(); }
+});
+</script>
+</body>
+</html>
