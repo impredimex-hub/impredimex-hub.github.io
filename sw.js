@@ -1,13 +1,27 @@
 // Service worker del portal.
-// Hace que se instale como un solo icono y que abra rápido. Las apps que
-// lista NO se cachean aquí: cada una tiene el suyo y se descarga sola.
+//
+// ⚠️ El portal vive en la raíz del sitio, así que este service worker tiene
+// alcance sobre TODA la dirección impredimex-hub.github.io, incluidas las
+// rutas de las otras apps: /rrhh-pwa/, /proceso-pwa/ y las que se sumen.
+//
+// Por eso solo puede tocar sus propios archivos. Cualquier otra petición se
+// deja pasar sin intervenir. La primera versión no lo hacía y respondía con
+// el index del portal cuando una app fallaba, así que al abrir Calidad se
+// veía el portal otra vez.
 
-const CACHE = 'portal-v1.0.0';
-const ESENCIALES = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
+const CACHE = 'portal-v1.0.1';
+
+// Únicas rutas que este service worker atiende. Todo lo demás pasa de largo.
+const MIAS = ['/', '/index.html', '/manifest.json', '/sw.js',
+              '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png'];
+
+const esMia = url => MIAS.includes(new URL(url).pathname);
 
 self.addEventListener('install', e => {
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ESENCIALES)).catch(() => {}));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(
+    ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png']
+  )).catch(() => {}));
 });
 
 self.addEventListener('activate', e => {
@@ -16,12 +30,15 @@ self.addEventListener('activate', e => {
     .then(() => self.clients.claim()));
 });
 
-// Red primero, y solo lo del propio portal. Las direcciones de las otras
-// apps pasan de largo: cada una responde por su cuenta.
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   if (new URL(req.url).origin !== location.origin) return;
+
+  // Lo de las otras apps no se toca: cada una tiene su propio service worker
+  // y responde por su cuenta.
+  if (!esMia(req.url)) return;
+
   e.respondWith(
     fetch(req).then(res => {
       const copia = res.clone();
