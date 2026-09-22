@@ -136,7 +136,6 @@ main{max-width:640px;margin:0 auto;padding:14px 20px 50px}
 .papel{display:inline-block;background:var(--navy-light);color:var(--navy);font-size:10px;
   font-weight:700;padding:1px 6px;border-radius:4px;margin-left:6px;vertical-align:1px}
 .vacio{text-align:center;color:var(--text2);font-size:13.5px;padding:40px 16px;line-height:1.6}
-.pie{text-align:center;font-size:11px;color:var(--text3);padding:18px}
 </style>
 </head>
 <body>
@@ -145,8 +144,9 @@ main{max-width:640px;margin:0 auto;padding:14px 20px 50px}
   <div class="caja">
     <div style="text-align:center;margin-bottom:6px">
       <div class="marca">IM</div>
-      <div style="font-size:18px;font-weight:700;color:var(--navy-dark)">IMPREDIMEX</div>
-      <div style="font-size:12px;color:var(--text2)">Impresión y Diseño de México</div>
+      <!-- Mismo trazo que el logotipo del encabezado de las apps: Jost 600 con
+           espaciado amplio. -->
+      <div style="font-family:'Jost',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:22px;font-weight:600;letter-spacing:.20em;color:#002060;line-height:1.15;margin-top:4px">IMPREDIMEX</div>
     </div>
     <label>Número de nómina</label>
     <input id="in-nom" inputmode="numeric" autocomplete="username">
@@ -170,7 +170,6 @@ main{max-width:640px;margin:0 auto;padding:14px 20px 50px}
     <button class="salir" onclick="salir()">Salir</button>
   </header>
   <main><div id="lista"></div></main>
-  <div class="pie">IMPREDIMEX — Impresión y Diseño de México S.A. de C.V.</div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
