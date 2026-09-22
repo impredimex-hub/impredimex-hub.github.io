@@ -102,9 +102,10 @@ button,input{font-family:inherit;font-size:inherit}
 #login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:22px}
 .caja{background:var(--surface);border-radius:18px;box-shadow:0 8px 34px rgba(0,32,96,.10);
   padding:30px 26px;width:100%;max-width:350px}
-.marca{background:var(--navy);color:#fff;width:54px;height:54px;border-radius:13px;
-  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:21px;
-  letter-spacing:.04em;margin:0 auto 12px}
+/* El mismo icono que la app tiene en la pantalla de inicio del teléfono,
+   con las esquinas redondeadas como lo dibuja el sistema. */
+.marca{width:64px;height:64px;border-radius:15px;display:block;margin:0 auto 12px;
+  box-shadow:0 2px 8px rgba(0,32,96,.18)}
 label{display:block;font-size:11.5px;font-weight:600;color:var(--text2);margin:12px 0 5px}
 input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;outline:none}
 input:focus{border-color:var(--navy-mid)}
@@ -143,7 +144,7 @@ main{max-width:640px;margin:0 auto;padding:14px 20px 50px}
 <div id="login">
   <div class="caja">
     <div style="text-align:center;margin-bottom:6px">
-      <div class="marca">IM</div>
+      <img class="marca" src="icon-192.png" alt="IMPREDIMEX" width="64" height="64">
       <!-- Mismo trazo que el logotipo del encabezado de las apps: Jost 600 con
            espaciado amplio. -->
       <div style="font-family:'Jost',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:22px;font-weight:600;letter-spacing:.20em;color:#002060;line-height:1.15;margin-top:4px">IMPREDIMEX</div>
@@ -154,10 +155,6 @@ main{max-width:640px;margin:0 auto;padding:14px 20px 50px}
     <input id="in-pwd" type="password" autocomplete="current-password">
     <div class="err" id="err"></div>
     <button class="btn" id="btn">Entrar</button>
-    <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:15px;line-height:1.5">
-      Es la misma clave de todas las aplicaciones.<br>
-      Si la olvidaste, pídele a un administrador que la restablezca.
-    </div>
   </div>
 </div>
 
