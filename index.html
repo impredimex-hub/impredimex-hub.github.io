@@ -230,9 +230,26 @@ $('btn').onclick = async () => {
 };
 ['in-nom','in-pwd'].forEach(id=>$(id).addEventListener('keydown',e=>{ if(e.key==='Enter') $('btn').click(); }));
 
+/**
+ * Espera una promesa, pero no para siempre.
+ *
+ * Sin esto, una consulta que nunca responde deja la pantalla quieta sin decir
+ * nada, que es de donde salían las pantallas en blanco.
+ */
+function conLimite(promesa, ms, etiqueta){
+  return Promise.race([
+    promesa,
+    new Promise((_, rechaza) => setTimeout(() => {
+      const e = new Error('Sin respuesta al ' + etiqueta + '.');
+      e.esDeEspera = true;
+      rechaza(e);
+    }, ms))
+  ]);
+}
+
 async function abrir(user){
   const nomina = (user.email||'').split('@')[0];
-  const doc = await suiteDb.collection('colaboradores').doc(nomina).get();
+  const doc = await conLimite(suiteDb.collection('colaboradores').doc(nomina).get(), 12000, 'leer tu registro de personal');
   const no = m => { const e=new Error(m); e.esDeAcceso=true; throw e; };
   if(!doc.exists) no('Tu cuenta no tiene registro de personal. Avisa a Recursos Humanos.');
   const c = doc.data()||{};
@@ -257,12 +274,23 @@ const titulo = t => t.toLowerCase().replace(/(^|\s)\S/g, s=>s.toUpperCase());
 /* El catálogo vive en la suite, no aquí. Agregar Tintas o Almacén es crear
    un documento en la colección `apps`, sin publicar una versión nueva. */
 async function pintarApps(){
-  let catalogo = APPS_RESPALDO;
-  try{
-    const snap = await suiteDb.collection('apps').get();
-    if(!snap.empty) catalogo = snap.docs.map(d=>({id:d.id, ...d.data()}));
-  }catch(e){ console.warn('Catálogo de apps, se usa el respaldo:', e); }
+  // La lista se pinta de inmediato con el catálogo del código, y solo se
+  // repinta si la consulta responde algo distinto.
+  //
+  // Antes se esperaba a la consulta ANTES de pintar nada: el portal ya había
+  // escondido la pantalla de contraseña, así que mientras esa espera durara
+  // no había ni contraseña ni lista. Eso era la pantalla en blanco. Y la
+  // consulta pide la colección `apps`, que todavía no existe, así que la
+  // espera era por algo que de todos modos terminaba usando este respaldo.
+  dibujarLista(APPS_RESPALDO);
 
+  try{
+    const snap = await conLimite(suiteDb.collection('apps').get(), 6000, 'leer el catálogo de aplicaciones');
+    if(!snap.empty) dibujarLista(snap.docs.map(d=>({id:d.id, ...d.data()})));
+  }catch(e){ console.warn('Catálogo de apps, se queda el respaldo:', e); }
+}
+
+function dibujarLista(catalogo){
   const mias = catalogo
     .filter(a => a.activa !== false && sesion.apps.includes(a.id))
     .sort((a,b)=>(a.orden||99)-(b.orden||99));
@@ -298,9 +326,51 @@ if('serviceWorker' in navigator){
 suiteAuth.onAuthStateChanged(async user=>{
   if(user && !sesion){
     try{ await abrir(user); }
-    catch(e){ console.error(e); arranqueListo(false); try{ await suiteAuth.signOut(); }catch(_){} }
+    catch(e){
+      console.error(e);
+      arranqueListo(false);
+      if(e && e.esDeAcceso){
+        // La cuenta no puede entrar: se cierra la sesión y se dice por qué.
+        $('err').textContent = e.message;
+        try{ await suiteAuth.signOut(); }catch(_){}
+      } else {
+        // No se pudo preguntar. **La sesión se queda abierta**: cerrarla por un
+        // tropiezo de red sacaría a la persona de las seis apps, porque la
+        // sesión es compartida.
+        mostrarReintento(e);
+      }
+    }
   } else if(!user){ arranqueListo(false); $('in-nom').focus(); }
 });
+
+/**
+ * Aviso con botón, en lugar de una pantalla quieta.
+ *
+ * Se dice en qué paso se detuvo: una foto de esta pantalla basta para saber
+ * dónde buscar, en vez de adivinar.
+ */
+function mostrarReintento(e){
+  const err = $('err');
+  if(!err) return;
+  err.innerHTML = '';
+
+  const texto = document.createElement('div');
+  texto.textContent = 'No se pudo abrir la suite. Suele ser la conexión.';
+  err.appendChild(texto);
+
+  const boton = document.createElement('button');
+  boton.className = 'btn';
+  boton.textContent = 'Reintentar';
+  boton.style.marginTop = '10px';
+  boton.onclick = () => location.reload();
+  err.appendChild(boton);
+
+  const detalle = document.createElement('div');
+  detalle.style.cssText = 'font-size:10.5px;color:var(--text3);margin-top:9px;line-height:1.5';
+  detalle.textContent = 'Se detuvo en: ' + ((e && e.message) || 'un paso desconocido') +
+    (navigator.onLine ? ' · El dispositivo reporta conexión.' : ' · El dispositivo reporta que no hay conexión.');
+  err.appendChild(detalle);
+}
 </script>
 </body>
 </html>
