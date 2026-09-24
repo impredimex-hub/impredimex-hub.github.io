@@ -77,6 +77,9 @@ html.con-sesion::after{
   /* Respaldo por si la colección `apps` todavía no existe en la suite.
      En cuanto exista, manda ella y esto deja de usarse. Las direcciones
      son las de hoy; al mover los repos solo cambia el catálogo. */
+  /** El catálogo de apps vive en el código hasta que exista la colección. */
+  const CATALOGO_REMOTO = false;
+
   const APPS_RESPALDO = [
     {id:'rrhh',     nombre:'Recursos Humanos',      descripcion:'Directorio, incidencias, capacitación y vacantes', url:'https://impredimex-hub.github.io/rrhh-pwa/',                          orden:1, activa:true, glifo:'personas'},
     {id:'epp',      nombre:'EPP',                   descripcion:'Verificación de equipo de protección y BPM',       url:'https://impredimex-hub.github.io/impredimex-epp/',            orden:2, activa:true, glifo:'casco'},
@@ -284,10 +287,18 @@ async function pintarApps(){
   // espera era por algo que de todos modos terminaba usando este respaldo.
   dibujarLista(APPS_RESPALDO);
 
-  try{
-    const snap = await conLimite(suiteDb.collection('apps').get(), 6000, 'leer el catálogo de aplicaciones');
-    if(!snap.empty) dibujarLista(snap.docs.map(d=>({id:d.id, ...d.data()})));
-  }catch(e){ console.warn('Catálogo de apps, se queda el respaldo:', e); }
+  // La colección `apps` todavía no existe. Mientras no exista, consultarla es
+  // una ida a la red en cada apertura, para todos, que además las reglas
+  // rechazan: 179 rechazos en un día venían de aquí.
+  //
+  // Para volver a usar el catálogo remoto: crear la colección `apps` con su
+  // regla de lectura y poner esto en `true`. Lo demás ya está escrito.
+  if(CATALOGO_REMOTO){
+    try{
+      const snap = await conLimite(suiteDb.collection('apps').get(), 6000, 'leer el catálogo de aplicaciones');
+      if(!snap.empty) dibujarLista(snap.docs.map(d=>({id:d.id, ...d.data()})));
+    }catch(e){ console.warn('Catálogo de apps, se queda el respaldo:', e); }
+  }
 }
 
 function dibujarLista(catalogo){
